@@ -1,6 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject, PLATFORM_ID, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { CartStore } from '../cart/cart.store';
+
+const PROMO_DISMISSED_KEY = 'smartcart.promo.dismissed';
 
 @Component({
   selector: 'app-header',
@@ -94,13 +97,14 @@ import { CartStore } from '../cart/cart.store';
   `,
 })
 export class Header {
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   protected readonly cart = inject(CartStore);
   protected readonly promoDismissed = signal(
-    localStorage.getItem('smartcart.promo.dismissed') === 'true',
+    this.isBrowser && localStorage.getItem(PROMO_DISMISSED_KEY) === 'true',
   );
 
   protected dismissPromo(): void {
-    localStorage.setItem('smartcart.promo.dismissed', 'true');
+    if (this.isBrowser) localStorage.setItem(PROMO_DISMISSED_KEY, 'true');
     this.promoDismissed.set(true);
   }
 }
