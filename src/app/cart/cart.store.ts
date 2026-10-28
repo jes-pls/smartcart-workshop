@@ -10,6 +10,8 @@ export interface CartLine {
 
 export const MAX_QUANTITY = 10;
 export const CART_STORAGE_KEY = 'smartcart.cart.v1';
+export const BULK_MIN_QUANTITY = 3;
+export const BULK_DISCOUNT_RATE = 0.1;
 
 interface StoredLine {
   productId: string;
@@ -26,10 +28,22 @@ export class CartStore {
 
   readonly lines = this.state.asReadonly();
   readonly count = computed(() => this.lines().reduce((sum, line) => sum + line.quantity, 0));
-  readonly total = computed(() => {
+  readonly subtotal = computed(() => {
     const sum = this.lines().reduce((acc, line) => acc + line.product.price * line.quantity, 0);
     return Math.round(sum * 100) / 100;
   });
+  /** Bulk discount: BULK_DISCOUNT_RATE off any line with a quantity of BULK_MIN_QUANTITY or more. */
+  readonly discount = computed(() => {
+    const sum = this.lines().reduce(
+      (acc, line) =>
+        line.quantity >= BULK_MIN_QUANTITY
+          ? acc + line.product.price * line.quantity * BULK_DISCOUNT_RATE
+          : acc,
+      0,
+    );
+    return Math.round(sum * 100) / 100;
+  });
+  readonly total = computed(() => Math.round((this.subtotal() - this.discount()) * 100) / 100);
 
   constructor() {
     effect(() => this.persist(this.lines()));
